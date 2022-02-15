@@ -1,4 +1,4 @@
-package meduse_server
+package main
 
 import (
 	"flag"
@@ -8,6 +8,7 @@ import (
 	"log"
 	"meduse-server/pkg/config"
 	logger2 "meduse-server/pkg/logger"
+	"meduse-server/pkg/server"
 	"os"
 	"strconv"
 )
@@ -54,20 +55,6 @@ func main() {
 		return
 	}
 
-	logger.Info().Str("Addr", strconv.Itoa(int(con.Server.Port))).Msg("Serve is running")
+	server.NewServer(strconv.Itoa(int(con.Server.Port)), logger)
 
-	/*
-		if _, err := os.Stat(con.Cert); err == nil {
-			logger.Info().Str("type", "wss").Msg("wss server start")
-			if err := server.ListenAndServeTLS(con.Cert, con.Key); err != nil {
-				logger.Fatal().Err(err).Msg("wss error")
-			}
-		} else {
-			logger.Info().Str("type", "ws").Msg("ws server start")
-			if err := server.ListenAndServe(); err != nil {
-				logger.Fatal().Err(err).Msg("ws error")
-			}
-		}
-
-	*/
 }
