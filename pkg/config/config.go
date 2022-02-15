@@ -7,7 +7,7 @@ import (
 
 type Config struct {
 	Title   string
-	Server  map[string]Server
+	Server  Server
 	LogInfo LogInfo `toml:"log_info"`
 	//Cert    string  `toml:"cert"`
 	//Key     string  `toml:"key"`
