@@ -39,6 +39,8 @@ func NewServer(port string, logger *zerolog.Logger) {
 				logger.Info().Str("", "d").Msg("connection is closed")
 				break
 			} else {
+				functionType := data[0]
+				print(functionType)
 				n, err := conn.Write([]byte("--"))
 				logger.Info().Str("", "d").Msg(string(n))
 				if err != nil {
