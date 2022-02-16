@@ -1,7 +1,9 @@
 package server
 
 import (
+	"context"
 	"github.com/rs/zerolog"
+	"meduse-server/pkg/server/handler"
 	"net"
 )
 
@@ -26,6 +28,15 @@ func NewServer(port string, logger *zerolog.Logger) {
 			logger.Err(err).Msg(err.Error())
 			continue
 		}
+
+		// NOTE: goroutineのキャンセル処理に使う
+		ctx, cancel := context.WithCancel(context.Background())
+
+		receiveMessage := make(chan []byte, 100)
+		sendingMessage := make(chan []byte, 100)
+		connection := handler.NewConnection(conn, receiveMessage, sendingMessage, logger)
+		go connection.Selector(ctx, cancel)
+		go connection.Receiver(ctx)
 
 		for {
 			data := make([]byte, 128)
