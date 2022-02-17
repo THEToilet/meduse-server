@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"log"
 	"meduse-server/pkg/config"
+	"meduse-server/pkg/domain/application"
+	"meduse-server/pkg/gateway/repository"
 	logger2 "meduse-server/pkg/logger"
 	"meduse-server/pkg/server"
 	"os"
@@ -55,6 +57,17 @@ func main() {
 		return
 	}
 
-	server.NewServer(strconv.Itoa(int(con.Server.Port)), logger)
+	// NOTE: Repository
+	userRepository := repository.NewUserRepository()
+	roomRepository, err := repository.NewRoomRepository()
+	if err != nil {
+		logger.Fatal().Msg("")
+	}
+
+	// NOTE: UseCase
+	userUseCase := application.NewUserUseCase(userRepository)
+	roomUseCase := application.NewRoomUseCase(roomRepository)
+
+	server.NewServer(strconv.Itoa(int(con.Server.Port)), userUseCase, roomUseCase, logger)
 
 }

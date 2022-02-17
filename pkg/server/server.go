@@ -3,11 +3,12 @@ package server
 import (
 	"context"
 	"github.com/rs/zerolog"
+	"meduse-server/pkg/domain/application"
 	"meduse-server/pkg/server/handler"
 	"net"
 )
 
-func NewServer(port string, logger *zerolog.Logger) {
+func NewServer(port string, userUseCase *application.UserUseCase, roomUseCase *application.RoomUseCase, logger *zerolog.Logger) {
 	// NOTE: IPv4のみ
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", ":"+port)
 	if err != nil {
@@ -22,7 +23,6 @@ func NewServer(port string, logger *zerolog.Logger) {
 	logger.Info().Str("Addr", port).Msg("Serve is running")
 
 	for {
-
 		conn, err := listener.Accept()
 		if err != nil {
 			logger.Err(err).Msg(err.Error())
@@ -34,31 +34,8 @@ func NewServer(port string, logger *zerolog.Logger) {
 
 		receiveMessage := make(chan []byte, 100)
 		sendingMessage := make(chan []byte, 100)
-		connection := handler.NewConnection(conn, receiveMessage, sendingMessage, logger)
+		connection := handler.NewConnection(conn, receiveMessage, sendingMessage, userUseCase, roomUseCase, logger)
 		go connection.Selector(ctx, cancel)
 		go connection.Receiver(ctx)
-
-		for {
-			data := make([]byte, 128)
-			length, err := conn.Read(data)
-			if err != nil {
-				logger.Err(err).Msg(err.Error())
-				break
-			}
-
-			if length == 0 {
-				logger.Info().Str("", "d").Msg("connection is closed")
-				break
-			} else {
-				functionType := data[0]
-				print(functionType)
-				n, err := conn.Write([]byte("--"))
-				logger.Info().Str("", "d").Msg(string(n))
-				if err != nil {
-					logger.Err(err).Msg(err.Error())
-					break
-				}
-			}
-		}
 	}
 }

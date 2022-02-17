@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"github.com/rs/zerolog"
+	"meduse-server/pkg/domain/application"
 	"meduse-server/pkg/domain/model"
 	"net"
 	"time"
@@ -13,15 +14,19 @@ type Connection struct {
 	conn           net.Conn
 	receiveMessage chan []byte
 	sendingMessage chan []byte
+	userUseCase    *application.UserUseCase
+	roomUseCase    *application.RoomUseCase
 	user           model.User
 	logger         *zerolog.Logger
 }
 
-func NewConnection(conn net.Conn, receiveMessage chan []byte, sendingMessage chan []byte, logger *zerolog.Logger) *Connection {
+func NewConnection(conn net.Conn, receiveMessage chan []byte, sendingMessage chan []byte, userUseCase *application.UserUseCase, roomUseCase *application.RoomUseCase, logger *zerolog.Logger) *Connection {
 	return &Connection{
 		conn:           conn,
 		receiveMessage: receiveMessage,
 		sendingMessage: sendingMessage,
+		userUseCase:    userUseCase,
+		roomUseCase:    roomUseCase,
 		logger:         logger,
 	}
 }
@@ -37,11 +42,14 @@ func (c *Connection) Selector(ctx context.Context, cancel context.CancelFunc) {
 	pongTimer := time.NewTimer(10 * time.Second)
 	stopTimer(pongTimer)
 	defer func() {
-		// TODO　ここ呼ばれない
+		// TODO　ここ呼ばれるか確認
 		stopTimer(pongTimer)
 		pingTimer.Stop()
 		c.logger.Debug().Caller().Msg("selector is close")
-		if err := c.signalingUseCase.Delete(c.user.UserID); err != nil {
+		if err := c.roomUseCase.Delete(c.user.UserID); err != nil {
+			c.logger.Debug().Msg("Delete error")
+		}
+		if err := c.userUseCase.Delete(c.user.UserID); err != nil {
 			c.logger.Debug().Msg("Delete error")
 		}
 	}()
@@ -86,7 +94,7 @@ L:
 			}
 		}
 	}
-	// TODO サーバが死んだことによる
+	// TODO: サーバが死んだことによる
 	// TODO: エラーメッセージをクライアント側へ送る
 	if err := c.sendMessage(&c.conn, []byte{}); err != nil {
 		c.logger.Debug().Msg("")
