@@ -14,18 +14,16 @@ type Connection struct {
 	conn           net.Conn
 	receiveMessage chan []byte
 	sendingMessage chan []byte
-	userUseCase    *application.UserUseCase
 	roomUseCase    *application.RoomUseCase
 	user           model.User
 	logger         *zerolog.Logger
 }
 
-func NewConnection(conn net.Conn, receiveMessage chan []byte, sendingMessage chan []byte, userUseCase *application.UserUseCase, roomUseCase *application.RoomUseCase, logger *zerolog.Logger) *Connection {
+func NewConnection(conn net.Conn, receiveMessage chan []byte, sendingMessage chan []byte, roomUseCase *application.RoomUseCase, logger *zerolog.Logger) *Connection {
 	return &Connection{
 		conn:           conn,
 		receiveMessage: receiveMessage,
 		sendingMessage: sendingMessage,
-		userUseCase:    userUseCase,
 		roomUseCase:    roomUseCase,
 		logger:         logger,
 	}
@@ -47,9 +45,6 @@ func (c *Connection) Selector(ctx context.Context, cancel context.CancelFunc) {
 		pingTimer.Stop()
 		c.logger.Debug().Caller().Msg("selector is close")
 		if err := c.roomUseCase.Delete(c.user.UserID); err != nil {
-			c.logger.Debug().Msg("Delete error")
-		}
-		if err := c.userUseCase.Delete(c.user.UserID); err != nil {
 			c.logger.Debug().Msg("Delete error")
 		}
 	}()

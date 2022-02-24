@@ -58,16 +58,11 @@ func main() {
 	}
 
 	// NOTE: Repository
-	userRepository := repository.NewUserRepository()
-	roomRepository, err := repository.NewRoomRepository()
-	if err != nil {
-		logger.Fatal().Msg("")
-	}
+	roomRepository := repository.NewRoomRepository()
 
 	// NOTE: UseCase
-	userUseCase := application.NewUserUseCase(userRepository)
-	roomUseCase := application.NewRoomUseCase(roomRepository)
+	roomUseCase := application.NewRoomUseCase(roomRepository, logger)
 
-	server.NewServer(strconv.Itoa(int(con.Server.Port)), userUseCase, roomUseCase, logger)
+	server.NewServer(strconv.Itoa(int(con.Server.Port)), roomUseCase, logger)
 
 }

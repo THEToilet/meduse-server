@@ -8,7 +8,7 @@ import (
 	"net"
 )
 
-func NewServer(port string, userUseCase *application.UserUseCase, roomUseCase *application.RoomUseCase, logger *zerolog.Logger) {
+func NewServer(port string, roomUseCase *application.RoomUseCase, logger *zerolog.Logger) {
 	// NOTE: IPv4のみ
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", ":"+port)
 	if err != nil {
@@ -33,7 +33,7 @@ func NewServer(port string, userUseCase *application.UserUseCase, roomUseCase *a
 
 		receiveMessage := make(chan []byte, 100)
 		sendingMessage := make(chan []byte, 100)
-		connection := handler.NewConnection(conn, receiveMessage, sendingMessage, userUseCase, roomUseCase, logger)
+		connection := handler.NewConnection(conn, receiveMessage, sendingMessage, roomUseCase, logger)
 		go connection.Selector(ctx, cancel)
 		go connection.Receiver(ctx)
 	}
