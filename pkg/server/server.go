@@ -28,7 +28,6 @@ func NewServer(port string, userUseCase *application.UserUseCase, roomUseCase *a
 			logger.Err(err).Msg(err.Error())
 			continue
 		}
-
 		// NOTE: goroutineのキャンセル処理に使う
 		ctx, cancel := context.WithCancel(context.Background())
 

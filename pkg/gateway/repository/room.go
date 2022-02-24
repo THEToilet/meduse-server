@@ -17,14 +17,11 @@ type RoomRepository struct {
 }
 
 func NewRoomRepository() (*RoomRepository, error) {
-	for i := 0; i < 4; i++ {
-		roomID, err := uuid.NewUUID()
-		if err != nil {
-			// TODO: 個々のエラーをモデル化する
-			return nil, model.ErrCannotGenerateRoomID
-		}
-		RoomList.Store(roomID.String(), model.NewRoom(roomID.String()))
+	roomID, err := uuid.NewUUID()
+	if err != nil {
+		return nil, model.ErrCannotGenerateRoomID
 	}
+	RoomList.Store(roomID.String(), model.NewRoom(roomID.String()))
 	return &RoomRepository{}, nil
 }
 

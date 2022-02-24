@@ -4,7 +4,7 @@ type Room struct {
 	RoomID      string
 	RoomState   RoomState
 	Host        User
-	Participant [3]User
+	Participant [8]User
 }
 
 func NewRoom(roomID string) *Room {
@@ -12,6 +12,6 @@ func NewRoom(roomID string) *Room {
 		RoomID:      roomID,
 		Host:        User{},
 		RoomState:   Matching,
-		Participant: [3]User{},
+		Participant: [8]User{},
 	}
 }
