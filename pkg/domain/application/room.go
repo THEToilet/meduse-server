@@ -1,15 +1,16 @@
 package application
 
 import (
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"meduse-server/pkg/domain/model"
 	"meduse-server/pkg/domain/repository"
 )
 
 type RoomUseCase struct {
-	RoomState      model.RoomState
-	Host           model.User
-	Controller     []model.User
+	roomState      model.RoomState
+	host           model.User
+	controller     []model.User
 	roomRepository repository.RoomRepository
 	logger         *zerolog.Logger
 }
@@ -17,7 +18,7 @@ type RoomUseCase struct {
 func NewRoomUseCase(roomRepository repository.RoomRepository, logger *zerolog.Logger) *RoomUseCase {
 	return &RoomUseCase{
 		roomRepository: roomRepository,
-		RoomState:      model.Making,
+		roomState:      model.Making,
 		logger:         logger,
 	}
 }
@@ -27,18 +28,26 @@ const (
 	MaxUser       = 8
 )
 
-func (r *RoomUseCase) RegisterUser() error {
+func (r *RoomUseCase) RegisterUser() (string, error) {
 	// TODO:部屋が8人以上だと拒否する
 	if len(r.roomRepository.FindAll()) > MaxUser {
-		return model.ErrRoomIsFull
+		return "", model.ErrRoomIsFull
 	}
-	return nil
+	userID, err := uuid.NewUUID()
+	if err != nil {
+		return "", model.ErrCannotGenerateUserID
+	}
+	return userID.String(), nil
 }
 
 // UpdateUser Update 名前の更新
 func (r *RoomUseCase) UpdateUser(user model.User) error {
 	err := r.roomRepository.Update(user)
 	return err
+}
+
+func (r *RoomUseCase) GetHostUser() (model.User, error) {
+	return r.host, nil
 }
 
 func (r *RoomUseCase) DeleteUser(userID string) error {
@@ -50,12 +59,13 @@ func (r *RoomUseCase) DeleteAllUser() {
 	r.roomRepository.DeleteAll()
 }
 
-func (r *RoomUseCase) ReturnToSpectators(userID string) {
-	for i, user := range r.Controller {
+func (r *RoomUseCase) ReturnToSpectators(userID string) error {
+	for i, user := range r.controller {
 		if user.UserID == userID {
-			r.Controller[i] = model.User{}
+			r.controller[i] = model.User{}
 		}
 	}
+	return nil
 }
 
 func (r *RoomUseCase) SpectatorMoveToController(userID string, controllerNumber int) error {
@@ -63,10 +73,15 @@ func (r *RoomUseCase) SpectatorMoveToController(userID string, controllerNumber 
 	if err != nil {
 		return model.ErrUserNotFound
 	}
-	r.Controller[controllerNumber-1] = *user
+	r.controller[controllerNumber-1] = *user
+	user.ControllerName = model.GetControllerName(controllerNumber)
 	return nil
 }
 
 func (r *RoomUseCase) GetAllControllerUser() []model.User {
-	return r.Controller
+	return r.controller
+}
+
+func (r *RoomUseCase) GetAllUser() []*model.User {
+	return r.roomRepository.FindAll()
 }

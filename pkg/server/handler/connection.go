@@ -14,16 +14,18 @@ type Connection struct {
 	conn           net.Conn
 	receiveMessage chan []byte
 	sendingMessage chan []byte
+	connections    Connections
 	roomUseCase    *application.RoomUseCase
 	user           model.User
 	logger         *zerolog.Logger
 }
 
-func NewConnection(conn net.Conn, receiveMessage chan []byte, sendingMessage chan []byte, roomUseCase *application.RoomUseCase, logger *zerolog.Logger) *Connection {
+func NewConnection(conn net.Conn, receiveMessage chan []byte, sendingMessage chan []byte, connections Connections, roomUseCase *application.RoomUseCase, logger *zerolog.Logger) *Connection {
 	return &Connection{
 		conn:           conn,
 		receiveMessage: receiveMessage,
 		sendingMessage: sendingMessage,
+		connections:    connections,
 		roomUseCase:    roomUseCase,
 		logger:         logger,
 	}
@@ -44,8 +46,11 @@ func (c *Connection) Selector(ctx context.Context, cancel context.CancelFunc) {
 		stopTimer(pongTimer)
 		pingTimer.Stop()
 		c.logger.Debug().Caller().Msg("selector is close")
-		if err := c.roomUseCase.Delete(c.user.UserID); err != nil {
+		if err := c.roomUseCase.DeleteUser(c.user.UserID); err != nil {
 			c.logger.Debug().Msg("Delete error")
+		}
+		if err := c.connections.Delete(c.user.UserID); err != nil {
+			c.logger.Debug().Msg("Connections Delete error")
 		}
 	}()
 
@@ -56,13 +61,9 @@ L:
 		select {
 		case <-pingTimer.C:
 			c.logger.Info().Msg("ping")
-			requestMessage, err := c.makePingMessage()
-			if err != nil {
-				c.logger.Info().Msg("ping make error")
-				break L
-			}
-			c.logger.Info().Interface("sendData", requestMessage).Interface("sendBinaryData", binary.Size(requestMessage)).Interface("userID", w.userID).Msg("SEND-PONG-LOG")
-			if err := c.sendMessage(&c.conn, requestMessage); err != nil {
+			message := []byte("1")
+			c.logger.Info().Interface("sendData", message).Interface("sendBinaryData", binary.Size(message)).Interface("userID", c.user.UserID).Msg("SEND-PONG-LOG")
+			if err := c.sendMessage(c.conn, message); err != nil {
 				break L
 			}
 			pongTimer.Reset(10 * time.Second)
@@ -82,16 +83,16 @@ L:
 				c.logger.Fatal().Msg("")
 				break L
 			}
-			c.logger.Info().Interface("sendData", msg).Interface("sendBinaryData", binary.Size(msg)).Interface("userID", w.userID).Msg("SEND-MESSAGE-LOG")
+			c.logger.Info().Interface("sendData", msg).Interface("sendBinaryData", binary.Size(msg)).Interface("userID", c.user.UserID).Msg("SEND-MESSAGE-LOG")
 			// クライアントへメッセージ送信
-			if err := c.sendMessage(&c.conn, msg); err != nil {
+			if err := c.sendMessage(c.conn, msg); err != nil {
 				break L
 			}
 		}
 	}
 	// TODO: サーバが死んだことによる
 	// TODO: エラーメッセージをクライアント側へ送る
-	if err := c.sendMessage(&c.conn, []byte{}); err != nil {
+	if err := c.sendMessage(c.conn, []byte{}); err != nil {
 		c.logger.Debug().Msg("")
 		return
 	}

@@ -7,6 +7,5 @@ var (
 	ErrUserNotFound         = errors.New("user not found")
 	ErrUserAlreadyExisted   = errors.New("user already existed")
 	ErrCannotGenerateUserID = errors.New("can not generate userID")
-	ErrCannotGenerateRoomID = errors.New("can not generate roomID")
 	ErrRoomIsFull           = errors.New("the room is full")
 )

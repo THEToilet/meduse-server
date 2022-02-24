@@ -1,0 +1,3 @@
+{"level":"info","Title":"meduse-server configuration","time":"2022/02/24 20:44:31.997","message":"Config"}
+{"level":"info","LogLevel":"DEBUG","time":"2022/02/24 20:44:32.001","message":"Config"}
+{"level":"info","Addr":"8080","time":"2022/02/24 20:44:32.002","message":"Serve is running"}

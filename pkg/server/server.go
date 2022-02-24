@@ -31,9 +31,11 @@ func NewServer(port string, roomUseCase *application.RoomUseCase, logger *zerolo
 		// NOTE: goroutineのキャンセル処理に使う
 		ctx, cancel := context.WithCancel(context.Background())
 
+		connections := handler.NewConnections(logger)
+
 		receiveMessage := make(chan []byte, 100)
 		sendingMessage := make(chan []byte, 100)
-		connection := handler.NewConnection(conn, receiveMessage, sendingMessage, roomUseCase, logger)
+		connection := handler.NewConnection(conn, receiveMessage, sendingMessage, *connections, roomUseCase, logger)
 		go connection.Selector(ctx, cancel)
 		go connection.Receiver(ctx)
 	}
