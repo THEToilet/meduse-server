@@ -10,7 +10,7 @@ const (
 	CON4 = ControllerName("Controller4")
 )
 
-func GetControllerName(num int) ControllerName {
+func GetControllerName(num uint) ControllerName {
 	switch num {
 	case 1:
 		return CON1

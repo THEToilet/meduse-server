@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"net"
-	"strconv"
 	"time"
 )
 
@@ -26,7 +25,7 @@ func (c *Connection) handleMessage(rawMessage []byte, pongTimer *time.Timer) {
 		// NOTE: ユーザ登録リクエスト | 0x02
 		userID, err := c.roomUseCase.RegisterUser()
 		if err != nil {
-			message := []byte("3" + userID)
+			message := []byte("2" + userID)
 			err := c.sendMessage(c.conn, message)
 			if err != nil {
 				c.logger.Fatal().Err(err).Msg("d")
@@ -112,8 +111,7 @@ func (c *Connection) handleMessage(rawMessage []byte, pongTimer *time.Timer) {
 	case 8:
 		// NOTE: ユーザをコントローラに登録 | 0x08
 		c.logger.Info().Interface("uuid", rawMessage[1:17])
-		conNum, _ := strconv.Atoi(string(rawMessage[18]))
-		err := c.roomUseCase.SpectatorMoveToController(string(rawMessage[1:17]), conNum)
+		err := c.roomUseCase.SpectatorMoveToController(string(rawMessage[1:17]), uint(rawMessage[18]))
 		if err != nil {
 			message := []byte("2" + err.Error())
 			err := c.sendMessage(c.conn, message)

@@ -68,7 +68,7 @@ func (r *RoomUseCase) ReturnToSpectators(userID string) error {
 	return nil
 }
 
-func (r *RoomUseCase) SpectatorMoveToController(userID string, controllerNumber int) error {
+func (r *RoomUseCase) SpectatorMoveToController(userID string, controllerNumber uint) error {
 	user, err := r.roomRepository.Find(userID)
 	if err != nil {
 		return model.ErrUserNotFound
