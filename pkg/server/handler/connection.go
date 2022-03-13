@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/binary"
+	"encoding/hex"
 	"github.com/rs/zerolog"
 	"meduse-server/pkg/domain/application"
 	"meduse-server/pkg/domain/model"
@@ -60,10 +61,10 @@ L:
 	for {
 		select {
 		case <-pingTimer.C:
-			c.logger.Info().Msg("ping")
-			message := []byte("1")
-			c.logger.Info().Interface("sendData", message).Interface("sendBinaryData", binary.Size(message)).Interface("userID", c.user.UserID).Msg("SEND-PONG-LOG")
+			message := []byte{1}
+			c.logger.Info().Interface("sendData", message).Interface("sendDataHex", hex.EncodeToString(message)).Interface("sendBinaryData", binary.Size(message)).Interface("userID", c.user.UserID).Msg("SEND-PONG-LOG")
 			if err := c.sendMessage(c.conn, message); err != nil {
+				c.logger.Error().Msg(err.Error())
 				break L
 			}
 			pongTimer.Reset(10 * time.Second)
@@ -71,7 +72,6 @@ L:
 			c.logger.Info().Msg("pong is failed")
 			break L
 		case msg, ok := <-c.receiveMessage:
-			c.logger.Info().Msg(string(msg))
 			if !ok {
 				c.logger.Fatal().Msg("d")
 				break L
@@ -112,16 +112,15 @@ L:
 			c.logger.Err(err).Msg(err.Error())
 			break L
 		}
+		c.logger.Info().Interface("data", data).Msg("receive raw data")
+		c.logger.Info().Interface("data", hex.EncodeToString(data)).Msg("receive hex data")
 
 		if length == 0 {
 			c.logger.Info().Str("", "d").Msg("connection is closed")
 			break L
 		} else {
-			functionType := data[0]
-			print(functionType)
-			c.logger.Info().Caller().Msg(string(data))
 			c.receiveMessage <- data
 		}
-		<-ctx.Done()
 	}
+	<-ctx.Done()
 }
